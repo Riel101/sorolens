@@ -1,9 +1,9 @@
 from enum import StrEnum
 
 
-class ListContractsOrder(StrEnum):
-    ASC = "asc"
-    DESC = "desc"
+class VerificationSourceInputKind(StrEnum):
+    ARCHIVE = "archive"
+    GIT = "git"
 
     def __str__(self) -> str:
         return str(self.value)

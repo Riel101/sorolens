@@ -7,7 +7,7 @@ import type { ContractsListResponse } from "@/lib/types";
 
 /**
  * Query accepted by {@link useContracts}. Mirrors the parameters of the
- * underlying `listContracts` client plus the sort options added for #477.
+ * underlying `listContracts` client plus the sort options added for #359.
  */
 export interface ContractsQuery {
   cursor?: string;
@@ -15,8 +15,8 @@ export interface ContractsQuery {
   network?: string;
   status?: string;
   tag?: string;
-  sort?: "added_at" | "last_activity" | "events_count";
-  order?: "asc" | "desc";
+  sort?: string;
+  dir?: "asc" | "desc";
 }
 
 /** Stable SWR cache key for a contracts-list query. */
