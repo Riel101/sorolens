@@ -16,11 +16,14 @@ import (
 // the postgres backend and the in-memory MockStore.
 type FullStore interface {
 	Store
+	ContractBulkStore
 	QueryStore
 	LiveStore
 	ArchiveStore
 	WatchdogStore
 	ContractUpgradeStore
+	ContractSpecStore
+	ContractTagStore
 	HealthScoreStore
 	APIKeyStore
 	AlertSubscriptionStore
@@ -28,7 +31,9 @@ type FullStore interface {
 	WatchlistStore
 	UserStore
 	PerformanceStore
+	ContractWasmStore
 	GlobalEventStore
+	ContractVerificationStore
 	LabelStore
 	FailedEventStore
 }

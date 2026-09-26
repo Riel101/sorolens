@@ -24,6 +24,7 @@ import type {
 } from "@/lib/types";
 import { getUserId } from "@/lib/user";
 import { StatCard } from "@/components/StatCard";
+import { TagInput } from "@/components/TagInput";
 import {
   CardSkeleton,
   ChartSkeleton,
@@ -38,6 +39,7 @@ import { EventsTable } from "@/components/EventsTable";
 import { StoragePanel } from "@/components/StoragePanel";
 import { SnapshotPanel } from "@/components/SnapshotPanel";
 import { HealthScoreCard } from "@/components/HealthScoreCard";
+import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { useEventStream } from "@/hooks/useEventStream";
 
 interface Props {
@@ -257,13 +259,13 @@ function ContractDetailContent({ id }: { id: string }) {
         setTagError(
           err instanceof ApiError && err.status === 401
             ? "You need a contributor identity to edit tags."
-            : "Failed to add tag.",
+            : "Failed to add tag."
         );
       } finally {
         setTagSaving(false);
       }
     },
-    [id],
+    [id]
   );
 
   const handleRemoveTag = useCallback(
@@ -277,13 +279,13 @@ function ContractDetailContent({ id }: { id: string }) {
         setTagError(
           err instanceof ApiError && err.status === 401
             ? "You need a contributor identity to edit tags."
-            : "Failed to remove tag.",
+            : "Failed to remove tag."
         );
       } finally {
         setTagSaving(false);
       }
     },
-    [id],
+    [id]
   );
 
   if (contractLoading) {
@@ -359,6 +361,7 @@ function ContractDetailContent({ id }: { id: string }) {
           >
             {contract?.status}
           </span>
+          <VerifiedBadge contractId={id} />
         </div>
         {contract?.sync && (
           <div className="mt-1 flex gap-4 text-xs text-[var(--color-text-secondary)]">
