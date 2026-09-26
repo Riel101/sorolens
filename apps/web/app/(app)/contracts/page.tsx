@@ -22,7 +22,6 @@ import type { ContractRow } from "@/lib/optimisticTrack";
 import { getUserId } from "@/lib/user";
 import { TableSkeleton } from "@/components/Skeleton";
 import ImportContractsCsv from "@/components/ImportContractsCsv";
-import { getUserId } from "@/lib/user";
 
 // ---------------------------------------------------------------------------
 // Constants

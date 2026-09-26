@@ -16,7 +16,6 @@ export interface OpenAPIParameter {
   description?: string;
   type?: "string" | "integer";
   default?: string;
-  enum?: string[];
 }
 
 export interface OpenAPIRequestBody {
