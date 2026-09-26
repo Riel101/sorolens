@@ -18,6 +18,7 @@ import {
   fireEvent,
   waitFor,
 } from "@testing-library/react";
+import { SWRConfig } from "swr";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // ── Mock next/link ──────────────────────────────────────────────────────────
@@ -111,6 +112,7 @@ const mockListContracts = vi.fn();
 
 vi.mock("@/lib/api", () => ({
   listContracts: (...args: unknown[]) => mockListContracts(...args),
+  getContract: vi.fn(),
 }));
 
 // ── Mock @/components/Skeleton ───────────────────────────────────────────────
@@ -168,11 +170,25 @@ describe("ContractsPage", () => {
     cleanup();
   });
 
-  // Helper: dynamic import so mocks are in place before module loads
+  // Helper: dynamic import so mocks are in place before module loads.
+  // Each render mounts a fresh SWR cache so tests stay independent, and
+  // deduping is disabled so a revalidation is observable immediately.
   async function renderPage() {
     const { default: ContractsPage } =
       await import("@/app/(app)/contracts/page");
-    return render(<ContractsPage />);
+    return render(
+      <SWRConfig
+        value={{
+          provider: () => new Map(),
+          dedupingInterval: 0,
+          revalidateOnFocus: false,
+          revalidateOnReconnect: false,
+          shouldRetryOnError: false,
+        }}
+      >
+        <ContractsPage />
+      </SWRConfig>
+    );
   }
 
   // ── Happy path: renders heading ────────────────────────────────────────────

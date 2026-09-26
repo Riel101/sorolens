@@ -5,8 +5,7 @@ import Link from "next/link";
 import { DataTable, Toast } from "@sorolens/ui";
 import type { Column } from "@sorolens/ui";
 import { LabelledId } from "@/components/LabelledId";
-import { listContracts } from "@/lib/api";
-import type { ContractSummary } from "@/lib/types";
+import { useContracts } from "@/hooks/useContracts";
 import { networkFilter, useNetwork } from "@/lib/network";
 import { contractRowKey, isPendingRow } from "@/lib/optimisticTrack";
 import type { ContractRow } from "@/lib/optimisticTrack";
@@ -173,14 +172,9 @@ export default function ContractsPage() {
   // Selected network from the header selector.
   const { network } = useNetwork();
 
-  // Data state
-  const [contracts, setContracts] = useState<ContractRow[]>([]);
-  const [loading, setLoading] = useState(true);
-
   // Pagination state: stack of cursors, index 0 = first page
   const [cursors, setCursors] = useState<(string | null)[]>([null]);
   const [cursorIndex, setCursorIndex] = useState(0);
-  const [hasMore, setHasMore] = useState(false);
 
   // Search state
   const [search, setSearch] = useState("");
@@ -204,46 +198,27 @@ export default function ContractsPage() {
   const dismissToast = useCallback(() => setToast(null), []);
 
   // ---------------------------------------------------------------------------
-  // Data fetching
+  // Data fetching (SWR)
   // ---------------------------------------------------------------------------
 
-  // Only the most recent load() may write to state, so a slow response can't
-  // overwrite a newer page, the optimistic list, or a restored snapshot.
-  const loadSeq = useRef(0);
+  // Every (cursor, network, tag) query is its own SWR cache entry: a visited
+  // page renders instantly from cache and revalidates in the background, and
+  // duplicate requests for the same query are de-duplicated. When the API is
+  // unreachable `data` stays undefined, which falls through to the empty state.
+  const { data, isLoading, mutate } = useContracts({
+    cursor: cursors[cursorIndex] ?? undefined,
+    limit: PAGE_SIZE,
+    network: networkFilter(network),
+    tag: tagFilter || undefined,
+  });
 
-  const load = useCallback(
-    async (cursor: string | null) => {
-      const seq = ++loadSeq.current;
-      setLoading(true);
-      try {
-        const data = await listContracts({
-          cursor: cursor ?? undefined,
-          limit: PAGE_SIZE,
-          network: networkFilter(network),
-          tag: tagFilter || undefined,
-        });
-        if (seq !== loadSeq.current) return;
-        setContracts(data.contracts ?? []);
-        setHasMore(data.has_more ?? false);
-      } catch {
-        if (seq !== loadSeq.current) return;
-        // Backend not reachable yet. Fall through to the empty state so the
-        // page still reads as "waiting for data" instead of "broken".
-        setContracts([]);
-        setHasMore(false);
-      } finally {
-        if (seq === loadSeq.current) setLoading(false);
-      }
-    },
-    [network, tagFilter]
-  );
-
-  useEffect(() => {
-    load(cursors[cursorIndex]);
-  }, [load, cursors, cursorIndex]);
+  const contracts: ContractRow[] = data?.contracts ?? [];
+  const hasMore = data?.has_more ?? false;
+  const loading = isLoading;
 
   // Reset to the first page when the network or tag filter changes. The ref
-  // guard keeps this from firing an extra fetch on mount.
+  // guard keeps this from firing an extra fetch on mount; the filter also
+  // changes the SWR key, which triggers the fetch on its own.
   const prevNetwork = useRef(network);
   const prevTag = useRef(tagFilter);
   useEffect(() => {
@@ -319,6 +294,9 @@ export default function ContractsPage() {
   const handleTrackSuccess = () => {
     setCursors([null]);
     setCursorIndex(0);
+    // Revalidate the visible page so a newly tracked/imported contract shows
+    // up even when we were already on page 1 (the SWR key does not change).
+    void mutate();
   };
 
   // Columns depend on the tag-click handler so a tag chip can set the filter.
